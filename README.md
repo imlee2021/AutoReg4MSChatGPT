@@ -17,10 +17,8 @@
 
 ## 安装
 
-使用Anaconda环境：
-
 ```
-conda create --name AutoReg4MSChatGPT --file requirements.txt
+pip install -r requirements.txt
 ```
 
 ## 使用
@@ -39,7 +37,12 @@ conda create --name AutoReg4MSChatGPT --file requirements.txt
    可能产生cf盾验证，需手动点击验证。
 3. > ChatGPTSmsVerify.py
 
-   先更改83行中的API key，实现自动对ChatGPT账号进行短信验证，将短信验证码放在chatgpt.csv中。
+   先更改 sa = SMSActivateAPI('') 中的API key，实现自动对ChatGPT账号进行短信验证，将短信验证码放在chatgpt.csv中。
+
+   可能产生cf盾验证，需手动点击验证。
+4. > GetApiKey.py
+
+   获取ChatGPT账号的API key，将API key放在api.csv中。
 
    可能产生cf盾验证，需手动点击验证。
 

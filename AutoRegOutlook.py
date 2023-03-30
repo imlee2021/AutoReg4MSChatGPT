@@ -36,6 +36,7 @@ def register(prefix, password, first_name, last_name, year, month, day):
     driver.get(
         'https://signup.live.com/newuser.aspx?contextid=A34663E86ABA02E6&uiflavor=web&lic=1&mkt=EN-US&lc=1033&uaid'
         '=412e188e23334594ad53f1a33880cf67')
+    driver.implicitly_wait(20)
     driver.find_element(By.ID, 'liveSwitch').click()
     driver.find_element(By.NAME, 'MemberName').send_keys(prefix)  # Email
     driver.find_element(By.ID, 'iSignupAction').click()

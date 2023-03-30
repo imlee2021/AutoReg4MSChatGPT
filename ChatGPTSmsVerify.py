@@ -37,16 +37,12 @@ def register(mail, password, sa, number):
     driver.find_element(By.ID, 'idSIButton9').click()
     wait.until(ec.element_to_be_clickable((By.ID, 'idA_PWD_ForgotPassword')))
     driver.find_element(By.ID, 'i0118').send_keys(password)
+    driver.implicitly_wait(20)
     driver.find_element(By.ID, 'idSIButton9').click()
 
-    element = wait.until(ec.any_of(ec.element_to_be_clickable((By.ID, 'piplConsentContinue')),
-                                   ec.element_to_be_clickable((By.ID, 'KmsiCheckboxField'))))
-    if element.get_attribute('id') == 'piplConsentContinue':
-        driver.find_element(By.ID, 'piplConsentContinue').click()
-        wait.until(ec.element_to_be_clickable((By.ID, 'idBtn_Back')))
-        driver.find_element(By.ID, 'idSIButton9').click()
-    else:
-        driver.find_element(By.ID, 'idSIButton9').click()
+    wait.until(ec.element_to_be_clickable((By.ID, 'KmsiCheckboxField')))
+    driver.find_element(By.ID, 'idSIButton9').click()
+
     element = wait.until(ec.element_to_be_clickable((By.XPATH,
                                                      '//button[@class="btn btn-full btn-lg btn-filled btn-primary '
                                                      'onb-uinfo-continue" and @type="submit"]')))
@@ -100,12 +96,13 @@ def main():
             except Exception as e:
                 print('注册失败：{}'.format(e))
             while True:
-                confirm = input("Was registration successful? (y/n/e): ")
+                confirm = input("Was registration successful? (y/n/e/r): ")
                 if confirm.lower() == 'y':
                     success_count += 1
                     if success_count >= 2:
                         sa.setStatus(id=number['activation_id'], status=6)  # 6: 释放号码
                         number = sa.getNumber(service='dr', country=6)  # dr: openai 6: 印度尼西亚
+                        success_count = 0
                     # write registration details to a csv file
                     with open('chatgpt.csv', 'a', newline='') as csv_file:
                         writer = csv.writer(csv_file)
@@ -117,8 +114,11 @@ def main():
                 elif confirm.lower() == 'e':
                     flag = False
                     break
+                elif confirm.lower() == 'r':
+                    number = sa.getNumber(service='dr', country=6)  # dr: openai 6: 印度尼西亚
+                    break
                 else:
-                    print("Invalid input. Please enter 'y' or 'n' or 'e'.")
+                    print("Invalid input. Please enter 'y' or 'n' or 'e' or 'r'.")
             if not flag:
                 break
         # 删除需要删除的行

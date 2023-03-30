@@ -1,21 +1,19 @@
 """
-基于undetected_edgedriver的ChatGPT自动登录脚本，ChatGPT使用微软账号首次登录，无法正常重定向，本脚本的目的是预处理注册好的微软账号，使其可以正常登录ChatGPT。
-selenium不能通过cf盾，使用undetected_edgedriver可以绕过cf盾。
-偶尔会弹出cf盾验证，需要手动验证。
+基于undetected_edgedriver的ChatGPT ApiKey 提取脚本
 
 Author: Eli Lee
 Version: 1.0
-Import: outlook.csv
-Export: ok.csv
+Import: chatgpt.csv
+Export: api.csv
 
 """
 
-from selenium.webdriver.common.by import By
-from undetected_edgedriver import Edge, EdgeOptions
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as ec
 import csv
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
+from undetected_edgedriver import Edge, EdgeOptions
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 
@@ -24,10 +22,9 @@ def register(mail, password):
     options.add_argument("--inprivate")  # 启用Edge浏览器无痕模式
     driver = Edge(driver_executable_path=EdgeChromiumDriverManager().install(), options=options)
     wait = WebDriverWait(driver, 60)  # 最长等待时间为60秒
-    driver.get('https://chat.openai.com/auth/login')
-    wait.until(ec.title_contains('ChatGPT | OpenAI'))  # 等待标题包含“Log In - OpenAI Chat”
-    driver.find_element(By.XPATH,
-                        '//div[@class="flex w-full items-center justify-center gap-2" and text()="Sign up"]').click()
+    driver.get('https://platform.openai.com/account/api-keys')
+    wait.until(ec.title_contains('OpenAI API'))  # 等待标题包含“OpenAI API”
+    driver.find_element(By.XPATH, "//span[@class='btn-label-inner' and contains(text(), 'Log in')]").click()
     wait.until(ec.element_to_be_clickable(
         (By.XPATH, '//span[@class="c47d81fe7" and text()="Continue with Microsoft Account"]')))
     driver.find_element(By.XPATH, '//span[@class="c47d81fe7" and text()="Continue with Microsoft Account"]').click()
@@ -38,35 +35,38 @@ def register(mail, password):
     driver.find_element(By.ID, 'i0118').send_keys(password)
     driver.implicitly_wait(20)
     driver.find_element(By.ID, 'idSIButton9').click()
-
     wait.until(ec.element_to_be_clickable((By.ID, 'KmsiCheckboxField')))
     driver.find_element(By.ID, 'idSIButton9').click()
-    wait.until(ec.element_to_be_clickable((By.ID, 'idBtn_Accept')))
-    driver.find_element(By.ID, 'idBtn_Accept').click()
+    create_button = wait.until(ec.element_to_be_clickable((By.XPATH, "//button[contains(., 'Create new secret key')]")))
+    create_button.click()
+    key_input = wait.until(ec.presence_of_element_located(
+        (By.XPATH, "//input[@class='text-input text-input-sm text-input-full' and @type='text']")))
+    value = key_input.get_attribute('value')
     driver.close()
+    return value
 
 
 def main():
-    with open('outlook.csv', newline='') as csvfile:
+    with open('chatgpt.csv', newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         rows = [row for row in reader]
         rows_to_delete = []
-        flag = True
+        flag = True  # 循环标志
         for index, row in enumerate(rows):
+            # 提取邮箱和密码信息
             mail = row[0]
             password = row[1]
-            print('正在注册邮箱：{}，密码：{}'.format(mail, password))
+            print('正在获取邮箱：{}，密码：{}'.format(mail, password))
             try:
-                register(mail, password)
+                value = register(mail, password)
             except Exception as e:
-                print('注册失败：{}'.format(e))
+                print('获取失败：{}'.format(e))
             while True:
-                confirm = input("Was operation successful? (y/n/e): ")
+                confirm = input("Was registration successful? (y/n/e): ")
                 if confirm.lower() == 'y':
-                    # write registration details to a csv file
-                    with open('ok.csv', 'a', newline='') as csv_file:
+                    with open('api.csv', 'a', newline='') as csv_file:
                         writer = csv.writer(csv_file)
-                        writer.writerow([mail, password])
+                        writer.writerow([mail, password, value])
                     rows_to_delete.append(index)
                     break
                 elif confirm.lower() == 'n':
@@ -82,8 +82,8 @@ def main():
         for index in reversed(rows_to_delete):
             rows.pop(index)
         # 将修改后的数据写回到CSV文件中
-        with open('outlook.csv', 'w', newline='') as okcsvfile:
-            writer = csv.writer(okcsvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        with open('chatgpt.csv', 'w', newline='') as chatcsvfile:
+            writer = csv.writer(chatcsvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in rows:
                 writer.writerow(row)
 
