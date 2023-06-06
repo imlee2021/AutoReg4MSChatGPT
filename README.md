@@ -9,7 +9,7 @@
 
 成品号：1.5r一个(价格可能变化以网页下单为准)
 
-下单：https://faka.imlee.top
+下单：https://shop.imlee.top
 
 ## 目录
 
